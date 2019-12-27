@@ -1,6 +1,6 @@
 #include "PS2X_lib.h"  //for v1.6
 #include <Servo.h>
-Servo myservo;
+Servo servoTAYGAP, servoTRAIPHAI, servoLENXUONG;
 int pos = 0;
 
 /******************************************************************
@@ -9,10 +9,13 @@ int pos = 0;
  *   - 2e colmun: Stef?
  * replace pin numbers by the ones you use
  ******************************************************************/
-#define PS2_DAT        13  //14    
-#define PS2_CMD        11  //15
-#define PS2_SEL        10  //16
-#define PS2_CLK        12  //17
+#define PS2_DAT               47  //13    
+#define PS2_CMD               8   //11
+#define PS2_SEL               9   //10
+#define PS2_CLK               51  //12
+#define PIN_SERVO_TAYGAP      4
+#define PIN_SERVO_LENXUONG    5
+#define PIN_SERVO_TRAIPHAI    6
 
 /******************************************************************
  * select modes of PS2 controller:
@@ -36,29 +39,61 @@ byte type = 0;
 byte vibrate = 0;
 
 //Motor A
-int enA = 3; 
-int in1 = 4; 
-int in2 = 5;  
+int enA = 2; 
+int in1 = 24; 
+int in2 = 26;  
 
 //Motor B
-int enB = 6; 
-int in3 = 7; 
-int in4 = 8;  
+int enB = 3; 
+int in3 = 28; 
+int in4 = 30;  
 
 
-void ControlServoPickUpL2()
+void ControlServoTAYGAPL2()
 {
-    pos += 2;
+    pos += 3;
     pos = (pos > 180) ? 180: pos;
-    myservo.write(pos);
+    servoTAYGAP.write(pos);
     delay(10);
 }
 
-void ControlServoPickUpR2()
+void ControlServoTAYGAPR2()
 {
-    pos -= 2;
+    pos -= 3;
     pos = (pos < 0) ? 0: pos;
-    myservo.write(pos);
+    servoTAYGAP.write(pos);
+    delay(10);
+}
+
+void ControlServoLEN_PADUP()
+{
+    pos -= 5;
+    pos = (pos > 180) ? 180: pos;
+    servoLENXUONG.write(pos);
+    delay(10);
+}
+
+void ControlServoXUONG_PADDOWN()
+{
+    pos += 5;
+    pos = (pos < 0) ? 0: pos;
+    servoLENXUONG.write(pos);
+    delay(10);
+}
+
+void ControlServoPHAI_PADRIGHT()
+{
+    pos += 3;
+    pos = (pos > 180) ? 180: pos;
+    servoTRAIPHAI.write(pos);
+    delay(10);
+}
+
+void ControlServoTRAI_PADLEFT()
+{
+    pos -= 3;
+    pos = (pos < 0) ? 0: pos;
+    servoTRAIPHAI.write(pos);
     delay(10);
 }
 
@@ -124,15 +159,15 @@ void ControlMotor()
 
 void PickUp()
 {
-    //Serial.println(pos);
-    if (ps2x.Button(PSB_L2))  { ControlServoPickUpL2();  Serial.println("L2 pressed");}
-    if (ps2x.Button(PSB_R2))  { ControlServoPickUpR2();  Serial.println("R2 pressed");}
+    if (ps2x.Button(PSB_L2))  { ControlServoTAYGAPL2();  Serial.println("L2 pressed");}
+    if (ps2x.Button(PSB_R2))  { ControlServoTAYGAPR2();  Serial.println("R2 pressed");}
 }
 
 void setup(){
- 
     Serial.begin(57600);
-    myservo.attach(9);
+    servoTAYGAP.attach(PIN_SERVO_TAYGAP);
+    servoTRAIPHAI.attach(PIN_SERVO_TRAIPHAI);
+    servoLENXUONG.attach(PIN_SERVO_LENXUONG);
     
     pinMode(enB, OUTPUT);
     pinMode(in1, OUTPUT);
@@ -170,8 +205,6 @@ void setup(){
     else if(error == 3)
       Serial.println("Controller refusing to enter Pressures mode, may not support it. ");
     
-  //  Serial.print(ps2x.Analog(1), HEX);
-    
     type = ps2x.readType(); 
     switch(type) {
       case 0:
@@ -183,7 +216,7 @@ void setup(){
       case 2:
         Serial.print("GuitarHero Controller found ");
         break;
-    case 3:
+      case 3:
         Serial.print("Wireless Sony DualShock Controller found ");
         break;
      }
@@ -209,25 +242,33 @@ void loop() {
       if(ps2x.Button(PSB_SELECT))
         Serial.println("Select is being held");      
   
-      if(ps2x.Button(PSB_PAD_UP)) {      //will be TRUE as long as button is pressed
+      if(ps2x.Button(PSB_PAD_UP)) 
+      {
+        ControlServoLEN_PADUP();
         Serial.print("Up held this hard: ");
         Serial.println(ps2x.Analog(PSAB_PAD_UP), DEC);
       }
+
+      if(ps2x.Button(PSB_PAD_DOWN))
+      {
+        ControlServoXUONG_PADDOWN();
+        Serial.print("DOWN held this hard: ");
+        Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
+      } 
       
-      if(ps2x.Button(PSB_PAD_RIGHT)){
+      if(ps2x.Button(PSB_PAD_RIGHT))
+      {
+        ControlServoPHAI_PADRIGHT();
         Serial.print("Right held this hard: ");
         Serial.println(ps2x.Analog(PSAB_PAD_RIGHT), DEC);
       }
       if(ps2x.Button(PSB_PAD_LEFT)){
+        ControlServoTRAI_PADLEFT();
         Serial.print("LEFT held this hard: ");
         Serial.println(ps2x.Analog(PSAB_PAD_LEFT), DEC);
       }
       
-      if(ps2x.Button(PSB_PAD_DOWN)){
-        Serial.print("DOWN held this hard: ");
-        Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
-      }   
-  
+        
       vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
 
       if (ps2x.NewButtonState()) 
